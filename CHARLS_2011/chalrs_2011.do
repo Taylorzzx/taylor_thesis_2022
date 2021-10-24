@@ -82,19 +82,19 @@ save family_info_2011, replace
 use "CHARLS2011_Dataset/work_retirement_and_pension.dta", clear
 
 * NRPS
-gen NRPS_received = (fn077 == 1)
-replace NRPS_received = . if fn077 == .
-gen NRPS_participated = (fn071 == 1)
-replace NRPS_participated = . if fn071 == .
+gen nrps_received = (fn077 == 1)
+replace nrps_received = . if fn077 == .
+gen nrps_participated = (fn071 == 1)
+replace nrps_participated = . if fn071 == .
 
 * fn079 is amount of NRPS benefits per month
-gen NRPS_amount = fn079*12
+gen nrps_amount = fn079*12
 gen salary = ff002
-gen side_salary_2011 = fj003*12,
-gen recreational_salary_2011 = fm059*12
+gen side_salary = fj003*12,
+gen recreational_salary = fm059*12
 
-keep ID householdID communityID NRPS_received NRPS_participated NRPS_amount salary ///
-side_salary_2011 recreational_salary_2011
+keep ID householdID communityID nrps_received nrps_participated nrps_amount salary ///
+side_salary recreational_salary
 
 save pension_2011, replace
 
@@ -131,7 +131,7 @@ gen married = be001
 gen educ = bd001
 gen age_year = ba002_1
 gen age_month = ba002_2
-gen rural_hukou = bc001 == 1,
+gen rural_hukou = bc001,
 gen female = (rgender == 2)
 replace female = . if rgender == .
 
@@ -148,10 +148,23 @@ save health_2011, replace
 
 * medical insurance
 use "CHARLS2011_Dataset/health_care_and_insurance.dta", clear
-gen med_insur_2011 = (ea001s10 != 10)
+gen med_insur = (ea001s10 != 10)
 
-keep ID householdID communityID med_insur_2011
+keep ID householdID communityID med_insur
 save med_2011, replace
+
+* [!ONLY 2011!]
+* community survey: whether teh community covered by NRPS 
+use "CHARLS2011_Dataset/community.dta", clear
+gen nrps_rollout = (jg033 == 1)
+replace nrps_rollout = . if jg033 == .
+
+* there are two communities haev sub communities but the answers to nrps_rollout are the same
+* so I only keep one from these two community community
+keep if sub_commuID == "01" | sub_commuID == ""
+
+keep communityID nrps_rollout
+save community_2011, replace
 
 /* [!ONLY 2011!]
 * proper display of chinese characters in psu.dta
@@ -189,8 +202,9 @@ merge 1:1 ID using "family_info_2011.dta", nogenerate
 merge 1:1 ID using "family_transfer_2011.dta", nogenerate
 merge 1:1 ID using "health_2011.dta", nogenerate
 
-* hh_income_2011 doesn't have ID, so I use householdID
+* hh_income_2011 and community_2011 don't have ID, so I use householdID & communityID
 merge m:1 householdID using "hh_income_2011.dta", nogenerate
+merge m:1 communityID using "community_2011.dta", nogenerate
 
 merge 1:1 ID using "indiv_income_2011.dta", nogenerate
 merge 1:1 ID using "med_2011.dta", nogenerate
@@ -198,6 +212,7 @@ merge 1:1 ID using "pension_2011.dta", nogenerate
 merge m:1 communityID using "region_nbs_2011.dta", nogenerate
 
 * [!ONLY 2011!]
+* match up with the ID in other three waves
 replace householdID = householdID + "0"
 replace ID = householdID + substr(ID,-2,2)
 
