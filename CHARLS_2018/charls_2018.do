@@ -88,15 +88,15 @@ save family_info_2018, replace
 use "CHARLS2018_Dataset/pension.dta", clear
 
 * NRPS
-gen NRPS_received = (fn058_w4_a == 2 & fn058_w4_b == 1)
-replace NRPS_received = . if fn058_w4_a != 2
-gen NRPS_participated = (fn058_w4_a == 2)
-replace NRPS_participated = . if fn058_w4_a == .
+gen nrps_received = (fn058_w4_a == 2 & fn058_w4_b == 1)
+replace nrps_received = . if fn058_w4_a != 2
+gen nrps_participated = (fn058_w4_a == 2)
+replace nrps_participated = . if fn058_w4_a == .
 
 * fn079 is amount of NRPS benefits per month
-gen NRPS_amount = fn066_w2_1*12 if NRPS_received == 1
-replace NRPS_amount = fn066_w2_min if NRPS_amount == -1
-keep ID householdID communityID NRPS_received NRPS_participated NRPS_amount 
+gen nrps_amount = fn066_w2_1*12 if nrps_received == 1
+replace nrps_amount = fn066_w2_min if nrps_amount == -1
+keep ID householdID communityID nrps_received nrps_participated nrps_amount 
 save pension_2018, replace
 
 * salary
@@ -192,5 +192,16 @@ merge 1:1 ID using "med_2018.dta", nogenerate
 merge 1:1 ID using "life_satisf_2018.dta", nogenerate
 merge 1:1 ID using "pension_2018.dta", nogenerate
 merge 1:1 ID using "salary_2018.dta", nogenerate
+
+* Age_ID
+merge 1:1 ID using "/Users/Taylor/Desktop/22 Thesis/taylor_thesis_2022/CHARLS_2015/age_ID_2015.dta", nogenerate
+drop if communityID == ""
+
+* NBS info
+merge m:1 communityID using "/Users/Taylor/Desktop/22 Thesis/taylor_thesis_2022/CHARLS_2011/region_nbs_2011.dta", nogenerate
+drop if ID == ""
+
+* CHARLS year
+gen year = 2018
 
 save charls_2018, replace

@@ -82,17 +82,17 @@ save family_info_2013, replace
 use "CHARLS2013_Dataset/work_retirement_and_pension.dta", clear
 
 * NRPS
-gen NRPS_received = (fn075_w2 == 1)
-replace NRPS_received = . if fn075_w2 == .
-gen NRPS_participated = (fn001_w2s9 == 9)
+gen nrps_received = (fn075_w2 == 1)
+replace nrps_received = . if fn075_w2 == .
+gen nrps_participated = (fn001_w2s9 == 9)
 
 * fn079 is amount of NRPS benefits per month
-gen NRPS_amount = fn077_w2*12
+gen nrps_amount = fn077_w2*12
 gen salary = ff002_1
 gen side_salary = fj003*12,
 gen recreational_salary = fm059*12
 
-keep ID householdID communityID NRPS_received NRPS_participated NRPS_amount salary ///
+keep ID householdID communityID nrps_received nrps_participated nrps_amount salary ///
 side_salary recreational_salary
 
 save pension_2013, replace
@@ -137,6 +137,11 @@ replace female = . if ba000_w2_3 == .
 keep ID householdID communityID married educ age_year age_month rural_hukou female
 save demo_info_2013, replace
 
+* this is used to figure out the rural hukou in 2015
+rename rural_hukou rural_hukou_2013
+keep ID rural_hukou_2013 
+save hukou_2013, replace
+
 * health
 use "CHARLS2013_Dataset/health_status_and_functioning.dta", clear
 gen self_reported_health = da002
@@ -174,5 +179,16 @@ merge m:1 householdID using "hh_income_2013.dta", nogenerate
 merge 1:1 ID using "indiv_income_2013.dta", nogenerate
 merge 1:1 ID using "med_2013.dta", nogenerate
 merge 1:1 ID using "pension_2013.dta", nogenerate
+
+* Age_ID
+merge 1:1 ID using "/Users/Taylor/Desktop/22 Thesis/taylor_thesis_2022/CHARLS_2015/age_ID_2015.dta", nogenerate
+drop if communityID == ""
+
+* NBS info
+merge m:1 communityID using "/Users/Taylor/Desktop/22 Thesis/taylor_thesis_2022/CHARLS_2011/region_nbs_2011.dta", nogenerate
+drop if ID == ""
+
+* CHARLS year
+gen year = 2013
 
 save charls_2013, replace

@@ -80,18 +80,18 @@ save family_info_2015, replace
 use "CHARLS2015_Dataset/work_retirement_and_pension.dta", clear
 
 * NRPS
-gen NRPS_received = (fn058_w2_1_ == 2)
-replace NRPS_received = . if fn058_w2_1_ == .
-gen NRPS_participated = (fn058_w2_1_ == 1 | fn058_w2_1_ == 2)
-replace NRPS_participated = . if fn058_w2_1_ == .
+gen nrps_received = (fn058_w2_1_ == 2)
+replace nrps_received = . if fn058_w2_1_ == .
+gen nrps_participated = (fn058_w2_1_ == 1 | fn058_w2_1_ == 2)
+replace nrps_participated = . if fn058_w2_1_ == .
 
 * fn079 is amount of NRPS benefits per month
-gen NRPS_amount = fn068_w2_1_*12
+gen nrps_amount = fn068_w2_1_*12
 gen salary = ff002_1
 gen side_salary = fj003*12,
 gen recreational_salary = fm059*12
 
-keep ID householdID communityID NRPS_received NRPS_participated NRPS_amount salary ///
+keep ID householdID communityID nrps_received nrps_participated nrps_amount salary ///
 side_salary recreational_salary
 
 save pension_2015, replace
@@ -144,6 +144,10 @@ replace female = . if ba000_w2_3 == .
 keep ID householdID communityID married educ age_year_ID age_month_ID rural_hukou female
 save demo_info_2015, replace
 
+* for the other three waves (monthly age based on ID)
+keep ID age_year_ID age_month_ID
+save age_ID_2015, replace
+
 * health
 use "CHARLS2015_Dataset/health_status_and_functioning.dta", clear
 gen self_reported_health = da002
@@ -178,5 +182,18 @@ merge m:1 householdID using "hh_income_2015.dta", nogenerate
 merge 1:1 ID using "indiv_income_2015.dta", nogenerate
 merge 1:1 ID using "med_2015.dta", nogenerate
 merge 1:1 ID using "pension_2015.dta", nogenerate
+
+* NBS info
+merge m:1 communityID using "/Users/Taylor/Desktop/22 Thesis/taylor_thesis_2022/CHARLS_2011/region_nbs_2011.dta", nogenerate
+drop if ID == ""
+
+* Hukou status
+merge 1:1 ID using "/Users/Taylor/Desktop/22 Thesis/taylor_thesis_2022/CHARLS_2013/hukou_2013.dta", nogenerate
+drop if householdID == ""
+replace rural_hukou = rural_hukou_2013 if rural_hukou == 4
+drop rural_hukou_2013
+
+* CHARLS year
+gen year = 2015
 
 save charls_2015, replace

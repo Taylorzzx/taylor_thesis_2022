@@ -216,7 +216,11 @@ merge m:1 communityID using "region_nbs_2011.dta", nogenerate
 replace householdID = householdID + "0"
 replace ID = householdID + substr(ID,-2,2)
 
+* Age_ID
+merge 1:1 ID using "/Users/Taylor/Desktop/22 Thesis/taylor_thesis_2022/CHARLS_2015/age_ID_2015.dta", nogenerate
+drop if communityID == ""
+
+* CHARLS year
+gen year = 2011
+
 save charls_2011, replace
-
-
-
