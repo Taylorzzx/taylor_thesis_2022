@@ -202,3 +202,6 @@ replace householdID = householdID + "0"
 replace ID = householdID + substr(ID,-2,2)
 
 save charls_2011, replace
+
+
+
