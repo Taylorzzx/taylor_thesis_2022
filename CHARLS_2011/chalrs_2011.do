@@ -9,47 +9,109 @@ cd "/Users/Taylor/Desktop/22 Thesis/taylor_thesis_2022/CHARLS_2011"
 */
 use "CHARLS2011_Dataset/family_transfer.dta", clear
 
-foreach v of varlist ce009_1_1 - ce009_10_1 {
-	replace `v' = . if `v' < 0 & `v' != .
-}
-foreach v of varlist ce029_1_1 - ce029_10_1 {
-	replace `v' = . if `v' < 0 & `v' != .
-}
-foreach v of varlist ce009_1_2 - ce009_10_2 {
-	replace `v' = . if `v' < 0 & `v' != .
-}
-foreach v of varlist ce029_1_2 - ce029_10_2 {
-	replace `v' = . if `v' < 0 & `v' != .
+* [only 2011] total = regular + nonregular monetary support
+* so need to get the values for non-regular
+forval i = 1/10{
+	rename ce009_`i'_1 reg_upsupport_`i'
+	rename ce029_`i'_1 reg_downsupport_`i'
+	rename ce009_`i'_2 reg_inkind_upsupport_`i'
+	rename ce029_`i'_2 reg_inkind_downsupport_`i'
+	rename ce009_`i'_3 nonreg_upsupport_`i'
+	rename ce029_`i'_3 nonreg_downsupport_`i'
+	rename ce009_`i'_4 nonreg_inkind_upsupport_`i'
+	rename ce029_`i'_4 nonreg_inkind_downsupport_`i'
+	
+	replace reg_upsupport_`i' = .  if reg_upsupport_`i' < 0 & reg_upsupport_`i' != .
+	replace reg_downsupport_`i' = .  if reg_downsupport_`i' < 0 & reg_downsupport_`i' != .
+	replace reg_inkind_upsupport_`i' = .  if reg_inkind_upsupport_`i' < 0 & reg_inkind_upsupport_`i' != .
+	replace reg_inkind_downsupport_`i' = .  if reg_inkind_downsupport_`i' < 0 & reg_inkind_downsupport_`i' != .
+	replace nonreg_upsupport_`i' = .  if nonreg_upsupport_`i' < 0 & nonreg_upsupport_`i' != .
+	replace nonreg_downsupport_`i' = .  if nonreg_downsupport_`i' < 0 & nonreg_downsupport_`i' != .
+	replace nonreg_inkind_upsupport_`i' = .  if nonreg_inkind_upsupport_`i' < 0 & nonreg_inkind_upsupport_`i' != .
+	replace nonreg_inkind_downsupport_`i' = .  if nonreg_inkind_downsupport_`i' < 0 & nonreg_inkind_downsupport_`i' != .
 }
 
-egen upsupport = rowtotal(ce009_1_1 - ce009_10_1), missing
-egen downsupport = rowtotal(ce029_1_1 - ce029_10_1), missing
-egen upsupport_inkind = rowtotal(ce009_1_2 - ce009_10_2), missing
-egen downsupport_inkind = rowtotal(ce029_1_2 - ce029_10_2), missing
-keep ID householdID communityID upsupport downsupport upsupport_inkind downsupport_inkind
+order _all, sequential
+
+egen upsupport = rowtotal(reg_upsupport_1 - reg_upsupport_10 nonreg_upsupport_1 - nonreg_upsupport_10), missing
+egen downsupport = rowtotal(reg_downsupport_1 - reg_downsupport_10 nonreg_downsupport_1 - nonreg_downsupport_10), missing
+egen upsupport_inkind = rowtotal(reg_inkind_upsupport_1 - reg_inkind_upsupport_10 nonreg_inkind_upsupport_1 - nonreg_inkind_upsupport_10), missing
+egen downsupport_inkind = rowtotal(reg_inkind_downsupport_1 - reg_inkind_downsupport_10 nonreg_inkind_downsupport_1 - nonreg_inkind_downsupport_10), missing
+
+* Brackets 
+
+forval i = 1/10{
+	rename ce009_`i'_1_a reg_upsupport_min_`i'
+	rename ce029_`i'_1_a reg_downsupport_min_`i'
+	rename ce009_`i'_1_b reg_upsupport_max_`i'
+	rename ce029_`i'_1_b reg_downsupport_max_`i'
+	rename ce009_`i'_3_a nonreg_upsupport_min_`i'
+	rename ce029_`i'_3_a nonreg_downsupport_min_`i'
+	rename ce009_`i'_3_b nonreg_upsupport_max_`i'
+	rename ce029_`i'_3_b nonreg_downsupport_max_`i'
+	
+	rename ce009_`i'_2_a inkind_reg_upsupport_min_`i'
+	rename ce029_`i'_2_a inkind_reg_downsupport_min_`i'
+	rename ce009_`i'_2_b inkind_reg_upsupport_max_`i'
+	rename ce029_`i'_2_b inkind_reg_downsupport_max_`i'
+	rename ce009_`i'_4_a inkind_nonreg_upsupport_min_`i'
+	rename ce029_`i'_4_a inkind_nonreg_downsupport_min_`i'
+	rename ce009_`i'_4_b inkind_nonreg_upsupport_max_`i'
+	rename ce029_`i'_4_b inkind_nonreg_downsupport_max_`i'
+}
+
+order _all, sequential
+egen upsupport_min = rowtotal(reg_upsupport_min_1 - reg_upsupport_min_10 nonreg_upsupport_min_1-nonreg_upsupport_min_10), missing
+egen upsupport_max = rowtotal(reg_upsupport_max_1 - reg_upsupport_max_10 nonreg_upsupport_max_1-nonreg_upsupport_max_10), missing
+egen upsupport_bracket_avg = rowmean(upsupport_min upsupport_max)
+
+egen downsupport_min = rowtotal(reg_downsupport_min_1-reg_downsupport_min_10 nonreg_downsupport_min_1-nonreg_downsupport_min_10), missing
+egen downsupport_max = rowtotal(reg_downsupport_max_1-reg_downsupport_max_10 nonreg_downsupport_max_1-nonreg_downsupport_max_10), missing
+egen downsupport_bracket_avg = rowmean(downsupport_min downsupport_max)
+
+egen inkind_upsupport_min = rowtotal(inkind_reg_upsupport_min_1 - inkind_reg_upsupport_min_10 inkind_nonreg_upsupport_min_1-inkind_nonreg_upsupport_min_10), missing
+egen inkind_upsupport_max = rowtotal(inkind_reg_upsupport_max_1 - inkind_reg_upsupport_max_10 inkind_nonreg_upsupport_max_1-inkind_nonreg_upsupport_max_10), missing
+egen inkind_upsupport_bracket_avg = rowmean(inkind_upsupport_min inkind_upsupport_max)
+
+egen inkind_downsupport_min = rowtotal(inkind_reg_downsupport_min_1-inkind_reg_downsupport_min_10 inkind_nonreg_downsupport_min_1-inkind_nonreg_downsupport_min_10), missing
+egen inkind_downsupport_max = rowtotal(inkind_reg_downsupport_max_1-inkind_reg_downsupport_max_10 inkind_nonreg_downsupport_max_1-inkind_nonreg_downsupport_max_10), missing
+egen inkind_downsupport_bracket_avg = rowmean(inkind_downsupport_min inkind_downsupport_max)
+
+replace upsupport = upsupport_bracket_avg if upsupport == . & upsupport_bracket_avg != .
+replace downsupport = downsupport_bracket_avg if upsupport == . & downsupport_bracket_avg != .
+replace upsupport_inkind = inkind_upsupport_bracket_avg if upsupport_inkind == . & inkind_upsupport_bracket_avg != .
+replace downsupport_inkind = inkind_downsupport_bracket_avg if upsupport_inkind == . & inkind_downsupport_bracket_avg != .
+
+* only in 2011
+*gen updum_eco = (ce007==1)
+*replace updum_eco = . if ce007 == .
+*gen downdum_eco = (ce027==1)
+*replace downdum_eco = . if ce027 == .
+
+* Time spent providing care to grandchildren
+gen care_dum = (cf001 == 1)
+replace care_dum = . if cf001 == .
+
+keep ID householdID communityID upsupport downsupport upsupport_inkind downsupport_inkind ///
+ care_dum
 
 save family_transfer_2011, replace
 
 * emotional support, income of children, and working child
 use "CHARLS2011_Dataset/family_information.dta", clear
 
-egen income_child = rowmean(cb069_1_-cb069_25_)
+order _all, sequential
+egen income_child = rowtotal(cb069_1_-cb069_25_), missing
 
 * use the non-missing values of income (cb069_1_-cb069_15_) to calculate nchild
 foreach v of varlist cb069_1_-cb069_25_ {
     generate dum`v' = 1 if `v' !=.
 } 
-foreach v of varlist dumcb069_1_-dumcb069_25_ {
-    replace `v' = 0 if `v'==.
-}
-gen nchild_dum = 0
-foreach v of varlist dumcb069_1_-dumcb069_25_ {
-	replace nchild_dum = nchild_dum + `v' 
-}
 
-gen nchild = nchild_dum
+egen nchild = rowtotal(dumcb069_1_-dumcb069_25_), missing
 
-egen emosupport = rowmean(cd004_1_ - cd004_14_)
+* Num of biological/adopted children currently living but not living with the respondent
+egen nchild_bio_adopted = rowtotal(cb001 cb009 cb017 cb025 cb033 cb041), missing
 
 * rewrite the emotional support in terms of days
 foreach v of varlist cd004_1_-cd004_14_ {
@@ -65,7 +127,21 @@ foreach v of varlist cd004_1_-cd004_14_ {
 	replace `v' = . if `v' ==10
   } 
   
-egen emosupport_365 = rowmean(cd004_1_ - cd004_14_)
+foreach v of varlist cd003_1_-cd003_14_ {
+    replace `v' = 365 if `v' ==1 & `v' !=.
+	replace `v' = 120 if `v' ==2 & `v' !=.
+	replace `v' = 48 if `v' ==3 & `v' !=.
+	replace `v' = 24 if `v' ==4 & `v' !=.
+	replace `v' = 12 if `v' ==5 & `v' !=.
+	replace `v' = 4 if `v' ==6 & `v' !=.
+	replace `v' = 2 if `v' ==7 & `v' !=.
+	replace `v' = 1 if `v' ==8 & `v' !=.
+	replace `v' = 0 if `v' ==9 & `v' !=.
+	replace `v' = . if `v' ==10
+  } 
+  
+egen freq_visit_365 = rowtotal(cd003_1_ - cd003_14_), missing
+egen freq_contact_365 = rowtotal(cd004_1_ - cd004_14_), missing
 
 * calculate the min of cb070 (whether there is at least one answer that is YES)  
 * in CHALRS YES = 1; No = 2
@@ -74,7 +150,13 @@ egen contains_1 = rowmin(cb070_1_ - cb070_25_)
 gen workingchild = (contains_1 == 1)
 replace workingchild = . if (contains_1 == .)
 
-keep ID householdID communityID income_child nchild emosupport emosupport_365 workingchild
+*no distance variable in 2018
+egen distance = rowtotal(cb053_1_1_ - cb053_1_14_ cb053_4_1_ - cb053_4_14_ cb053_8_1_-cb053_8_14_), missing
+gen live_outside = (distance > 0)
+replace live_outside = . if distance == .
+
+keep ID householdID communityID income_child nchild freq_contact_365 freq_visit_365 workingchild ///
+nchild_bio_adopted live_outside
 
 save family_info_2011, replace
 
@@ -94,7 +176,7 @@ gen side_salary = fj003*12,
 gen recreational_salary = fm059*12
 
 keep ID householdID communityID nrps_received nrps_participated nrps_amount salary ///
-side_salary recreational_salary
+side_salary recreational_salary 
 
 save pension_2011, replace
 
@@ -102,7 +184,7 @@ save pension_2011, replace
 * there is no ID in this dataset
 use "CHARLS2011_Dataset/household_income.dta", clear
 egen hh_rental = rowtotal(ha060_1_ - ha060_4_), missing
-
+order _all, sequential
 * household expenditure
 foreach v of varlist ge010_1-ge010_14 {
     replace `v' = 0 if `v' == -9999 | `v' == -999 | `v' == -99990
@@ -219,6 +301,13 @@ replace ID = householdID + substr(ID,-2,2)
 * Age_ID
 merge 1:1 ID using "/Users/Taylor/Desktop/22 Thesis/taylor_thesis_2022/CHARLS_2015/age_ID_2015.dta", nogenerate
 drop if communityID == ""
+
+* nchild_bio_2018
+merge 1:1 ID using "/Users/Taylor/Desktop/22 Thesis/taylor_thesis_2022/CHARLS_2018/nchild_2018.dta"
+drop if _merge == 2
+replace nchild_bio_adopted_2018 = nchild_bio_adopted if nchild_bio_adopted_2018 == . & nchild_bio_adopted != .
+replace nchild_bio_adopted_2018 = nchild_bio_adopted if nchild_bio_adopted_2018 != . & nchild_bio_adopted != . & nchild_bio_adopted_2018 < nchild_bio_adopted
+drop _merge
 
 * CHARLS year
 gen year = 2011

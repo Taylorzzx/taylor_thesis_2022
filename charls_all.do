@@ -12,6 +12,9 @@ append using "CHARLS_2018/charls_2018.dta"
 destring iyear imonth, replace
 gen monthly_age = (iyear - age_year_ID )*12 + imonth-age_month_ID
 
+* married 1 means marreid and live together
+replace married = 0 if married != 1 & married != .
+
 * dummies of upstream and downstream support
 gen updum = (upsupport > 0)
 replace updum = . if upsupport == .
@@ -32,10 +35,18 @@ replace lnupsupport_inkind = 0 if upsupport_inkind == 0
 gen lndownsupport_inkind = log(downsupport_inkind)
 replace lndownsupport_inkind = 0 if downsupport_inkind == 0
 
-* round the emosupport (calculated by rowmean)
-gen emosupport_r = round(emosupport)
-gen emodum = (emosupport_r > 0)
-replace emodum = . if emosupport_r == .
+* combine non-monetary and monetary assistance
+egen upsupport_sum = rowtotal(upsupport upsupport_inkind), missing
+egen downsupport_sum = rowtotal(downsupport downsupport_inkind), missing
+gen lnupsupport_sum = log(upsupport_sum)
+replace lnupsupport_sum = 0 if upsupport_sum == 0
+gen lndownsupport_sum = log(downsupport_sum)
+replace lndownsupport_sum = 0 if downsupport_sum == 0
+
+gen updum_sum = (upsupport_sum > 0)
+replace updum_sum = . if upsupport_sum == .
+gen downdum_sum = (downsupport_sum > 0)
+replace downdum_sum = . if downsupport_sum == .
 
 * values of education in 2015 need to change since 12 means no change (actually =1)
 replace educ = 1 if educ == 12 & year == 2015
@@ -56,10 +67,38 @@ bysort householdID (random) : gen byte select = _n == 1
 bysort householdID ID (select) : replace select = select[_N]
 
 * label
+label variable married "Marital Status"
+label variable educ "Education"
+label variable rural_hukou "Rural Hukou"
+label variable female "Gender"
+label variable income_child "Children's Income"
+label variable nchild "Numer of Children Earning Income"
+label variable nchild_bio_adopted "Number of Biological and Adopted Children"
+label variable freq_visit_365 "Frequency of Visits"
+label variable freq_contact_365 "Frequency of Contact"
+label variable workingchild "Have Children Working"
+label variable live_outside "Non-cohabiting Children"
+label variable lndownsupport_sum "Downstream Support"
+label variable lndownsupport "Downstream Financial Support"
+label variable lndownsupport_inkind "Downstream Inkind Support"
+label variable lnupsupport_sum "Upstream Support"
+label variable lnupsupport "Upstream Financial Support"
+label variable lnupsupport_inkind "Upstream Inkind Support"
+label variable care_dum "Take Care of Grandchildren"
+label variable east_region "East"
+label variable middle_region "Middle"
+label variable west_region "West"
+label variable monthly_age "Monthly Age"
+label variable downdum "Received downsupport"
+label variable downdum_inkind "Received downsupport_inkind"
+label variable downdum_sum "Received downsupport_sum"
+label variable downdum "Received upsupport"
+label variable downdum_inkind "Received upsupport_inkind"
+label variable downdum_sum "Received upsupport_sum"
+label variable lnperfinan "Personal Financing"
+label variable nrps_received "Received NRPS"
+label variable nrps_participated "Enrolled in NRPS"
+label variable nrps_rollout "Covered by NRPS"
 
+order _all, alphabetic
 save charls_all, replace
-
-* sample
-keep if rural_hukou == 1 & select == 1 & nrps_rollout == 1
-
-save charls_sample, replace
